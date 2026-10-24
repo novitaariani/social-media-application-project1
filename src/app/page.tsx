@@ -1,87 +1,60 @@
 'use client';
+import Link from 'next/link';
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 
-type LoginForm = {
-  email: string;
-  password: string;
-};
-
-export default function HomePage() {
-  const router = useRouter();
-  const [form, setForm] = useState<LoginForm>({ email: '', password: '' });
-  const [loading, setLoading] = useState(false);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      const res = await fetch(
-        'https://be-social-media-api-production.up.railway.app/api/auth/login',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(form),
-        }
-      );
-      const data = (await res.json()) as { token?: string };
-      if (data.token) {
-        localStorage.setItem('token', data.token);
-        router.push('/timeline');
-      }
-    } catch (error) {
-      console.log('Login failed', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+export default function Home() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
   return (
-    <div className='min-h-screen bg-black flex items-center justify-center p-6'>
-      <div className='w-full max-w-[360px] space-y-6'>
-        <div className='flex items-center gap-2 justify-center'>
-          <Image
-            src='/logo.png'
-            width={28}
-            height={28}
-            alt='Sociality logo'
-            unoptimized
-          />
-          <span className='font-bold text-[20px] text-white'>Sociality</span>
-        </div>
-        <form onSubmit={handleLogin} className='space-y-4'>
-          <input
-            name='email'
-            value={form.email}
-            onChange={handleChange}
-            placeholder='Email'
-            className='w-full bg-[#1E1E1E] border border-white/10 rounded-full px-5 py-3 text-[13px] text-white outline-none placeholder:text-white/30'
-          />
-          <input
-            name='password'
-            type='password'
-            value={form.password}
-            onChange={handleChange}
-            placeholder='Password'
-            className='w-full bg-[#1E1E1E] border border-white/10 rounded-full px-5 py-3 text-[13px] text-white outline-none placeholder:text-white/30'
-          />
-          <button
-            type='submit'
-            disabled={loading}
-            className='w-full bg-white text-black rounded-full py-3 text-[13px] font-bold'
+    <div className='min-h-screen flex items-center justify-center bg-[#fafafa]'>
+      <div className='w-full max-w-[350px] flex flex-col gap-4'>
+        {/* Logo Card */}
+        <div className='bg-white border border-gray-300 p-10 flex flex-col items-center'>
+          <h1
+            className='text-4xl font-bold mb-8'
+            style={{ fontFamily: 'cursive' }}
           >
-            {loading ? 'Loading...' : 'Log In'}
+            Sociality
+          </h1>
+
+          <input
+            placeholder='Email'
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className='w-full bg-[#fafafa] border border-gray-300 rounded-sm px-2 py-2 text-sm mb-2 focus:outline-none'
+          />
+          <input
+            type='password'
+            placeholder='Password'
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className='w-full bg-[#fafafa] border border-gray-300 rounded-sm px-2 py-2 text-sm mb-4 focus:outline-none'
+          />
+          <button className='w-full bg-[#0095f6] text-white rounded-lg py-1.5 text-sm font-semibold'>
+            Log In
           </button>
-        </form>
-        <p className='text-center text-[11px] text-white/40'>
-          Do not have an account? Sign up
-        </p>
+
+          <div className='flex items-center w-full my-4'>
+            <div className='flex-1 h-[1px] bg-gray-300'></div>
+            <span className='px-3 text-xs text-gray-500 font-semibold'>OR</span>
+            <div className='flex-1 h-[1px] bg-gray-300'></div>
+          </div>
+
+          <Link
+            href='/timeline'
+            className='text-sm text-[#385185] font-semibold'
+          >
+            Continue to Timeline
+          </Link>
+        </div>
+
+        <div className='bg-white border border-gray-300 p-5 text-center text-sm'>
+          Do not have an account?{' '}
+          <Link href='/register' className='text-[#0095f6] font-semibold'>
+            Sign up
+          </Link>
+        </div>
       </div>
     </div>
   );
