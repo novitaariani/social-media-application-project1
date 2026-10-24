@@ -1,185 +1,130 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import Image from 'next/image';
 import Navbar from '@/components/Navbar';
-import LikesModal from '@/components/LikesModal';
+import CommentsModal from '@/components/CommentsModal';
 
-const API =
-  process.env.NEXT_PUBLIC_API_URL ||
-  'https://be-social-media-api-production.up.railway.app';
+function Caption({ text }: { text: string }) {
+  const [expand, setExpand] = useState(false);
+  const isLong = text.length > 120;
+  const displayText = expand ? text : text.slice(0, 120);
 
-type Post = {
-  _id: string;
-  image: string;
-  caption: string;
-  likes: number;
-  isLiked?: boolean;
-  user?: any;
-};
+  return (
+    <p className='text-[12px] text-white/70 px-1 leading-[18px]'>
+      {displayText}
+      {!expand && isLong && '... '}
+      {isLong && (
+        <button
+          onClick={() => setExpand(!expand)}
+          className='text-white font-semibold hover:text-white/80'
+        >
+          {expand ? ' Show Less' : 'Show More'}
+        </button>
+      )}
+    </p>
+  );
+}
 
 export default function TimelinePage() {
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [activeLikesPost, setActiveLikesPost] = useState<string | null>(null);
+  const [openComment, setOpenComment] = useState(false);
+  const [activeImg, setActiveImg] = useState('/images/kids.jpg');
 
-  useEffect(() => {
-    fetch(`${API}/api/posts?page=1&limit=20`)
-      .then((r) => r.json())
-      .then((json) => {
-        const data = json.data || json.posts || json || [];
-        setPosts(
-          data.length
-            ? data.map((p: any) => ({
-                ...p,
-                _id: p._id || p.id,
-                likes: p.likesCount ?? p.likes ?? 20,
-                isLiked: p.isLiked ?? p.is_liked ?? false,
-              }))
-            : ([
-                {
-                  _id: '1',
-                  image: 'kids.jpg',
-                  caption: 'Creating unforgettable moments...',
-                  likes: 20,
-                  isLiked: false,
-                  user: { username: 'Johndoe' },
-                },
-              ] as any)
-        );
-      })
-      .catch(() => {
-        setPosts([
-          {
-            _id: '1',
-            image: 'kids.jpg',
-            caption: 'Creating unforgettable moments...',
-            likes: 20,
-            isLiked: false,
-            user: { username: 'Johndoe' },
-          },
-        ] as any);
-      });
-  }, []);
+  const posts = [
+    '/images/home.jpg',
+    '/images/kids.jpg',
+    '/images/nature.jpg',
+    '/images/party.jpg',
+  ];
 
-  // LIKE ACTION - sesuai Swagger POST /api/posts/{id}/like
-  const handleLike = async (postId: string) => {
-    const target = posts.find((p) => p._id === postId);
-    if (!target) return;
-
-    // Optimistic UI - langsung berubah tanpa nunggu BE
-    setPosts((prev) =>
-      prev.map((p) =>
-        p._id === postId
-          ? {
-              ...p,
-              isLiked: !p.isLiked,
-              likes: p.isLiked ? p.likes - 1 : p.likes + 1,
-            }
-          : p
-      )
-    );
-
-    try {
-      const token =
-        typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-      const res = await fetch(`${API}/api/posts/${postId}/like`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-      });
-
-      if (!res.ok) {
-        // Kalau 401/403, rollback karena belum login
-        console.log('like api failed', res.status);
-        // rollback
-        setPosts((prev) =>
-          prev.map((p) =>
-            p._id === postId
-              ? { ...p, isLiked: target.isLiked, likes: target.likes }
-              : p
-          )
-        );
-      }
-    } catch (e) {
-      console.log('like error', e);
-    }
-  };
+  const caption =
+    'Creating unforgettable moments with my favorite person! ✨ Every laugh, every adventure, every quiet moment together feels like magic. #Love #CoupleGoals #Memories';
 
   return (
     <div className='min-h-screen bg-black text-white'>
       <Navbar />
-      <main className='max-w-[500px] mx-auto pt-6 pb-24'>
-        {posts.map((post) => (
-          <div key={post._id} className='mb-10 px-3'>
-            <div className='flex items-center gap-2.5 mb-3'>
-              <img
+      <div className='max-w-[600px] mx-auto mt-6 px-4 pb-20 space-y-10'>
+        {posts.map((img, i) => (
+          <div key={i} className='border-b border-white/10 pb-6'>
+            <div className='flex gap-2.5 mb-3'>
+              <Image
                 src='/images/john-doe.jpg'
-                className='w-9 h-9 rounded-full object-cover'
-                alt=''
+                width={32}
+                height={32}
+                className='rounded-full object-cover'
+                alt='John Doe'
+                unoptimized
               />
               <div>
-                <p className='text-[13px] font-bold'>
-                  {post.user?.username || 'Johndoe'}
-                </p>
-                <p className='text-[11px] text-white/40'>1 Minutes Ago</p>
+                <p className='text-[13px] font-semibold'>John Doe</p>
+                <p className='text-[10px] text-white/40'>1 Minutes Ago</p>
               </div>
             </div>
-
-            <img
-              src={`/images/${post.image}`}
-              className='w-full aspect-square object-cover rounded-xl bg-zinc-900'
-              alt=''
+            <Image
+              src={img}
+              alt='post'
+              width={600}
+              height={500}
+              className='w-full rounded-[12px] object-cover max-h-[500px]'
+              unoptimized
             />
-
-            <div className='flex items-center justify-between mt-3 px-1'>
-              <div className='flex items-center gap-5'>
-                {/* LIKE ACTION - KLIK ICON HATI */}
-                <div className='flex items-center gap-1.5'>
-                  <button
-                    onClick={() => handleLike(post._id)}
-                    className='active:scale-90 transition-transform'
-                  >
-                    <img
-                      src='/like-icon.png'
-                      className={`w-5 h-5 object-contain transition-all ${post.isLiked ? 'opacity-100' : 'grayscale opacity-60 hover:opacity-100'}`}
-                      alt='like'
-                    />
-                  </button>
-                  {/* KLIK ANGKA BUKA MODAL */}
-                  <button onClick={() => setActiveLikesPost(post._id)}>
-                    <span
-                      className={`text-[12px] ${post.isLiked ? 'text-[#FF4D6D] font-bold' : ''}`}
-                    >
-                      {post.likes}
-                    </span>
-                  </button>
-                </div>
-
-                <div className='flex items-center gap-1.5'>
-                  <img src='/message.png' className='w-5 h-5' alt='' />
-                  <span className='text-[12px]'>20</span>
-                </div>
-                <div className='flex items-center gap-1.5'>
-                  <img src='/send-2.png' className='w-5 h-5' alt='' />
-                  <span className='text-[12px]'>20</span>
-                </div>
-              </div>
-              <img
-                src='/archive.png'
-                className='w-5 h-5 object-contain'
-                alt=''
-              />
+            <div className='flex items-center gap-5 px-1 py-3'>
+              <button className='flex items-center gap-1.5'>
+                <Image
+                  src='/like-icon.png'
+                  width={20}
+                  height={20}
+                  alt='like'
+                  unoptimized
+                />
+                <span className='text-[13px] text-white/80'>20</span>
+              </button>
+              <button
+                onClick={() => {
+                  setActiveImg(img);
+                  setOpenComment(true);
+                }}
+                className='flex items-center gap-1.5'
+              >
+                <Image
+                  src='/message.png'
+                  width={20}
+                  height={20}
+                  alt='message'
+                  unoptimized
+                />
+                <span className='text-[13px] text-white/80'>20</span>
+              </button>
+              <button className='flex items-center gap-1.5'>
+                <Image
+                  src='/send-2.png'
+                  width={20}
+                  height={20}
+                  alt='send'
+                  unoptimized
+                />
+                <span className='text-[13px] text-white/80'>20</span>
+              </button>
+              <button className='ml-auto'>
+                <Image
+                  src='/archive.png'
+                  width={20}
+                  height={20}
+                  alt='archive'
+                  unoptimized
+                />
+              </button>
             </div>
+            <Caption text={caption} />
           </div>
         ))}
-
-        {activeLikesPost && (
-          <LikesModal
-            postId={activeLikesPost}
-            onClose={() => setActiveLikesPost(null)}
-          />
-        )}
-      </main>
+      </div>
+      {openComment && (
+        <CommentsModal
+          postId='1'
+          image={activeImg}
+          onClose={() => setOpenComment(false)}
+        />
+      )}
     </div>
   );
 }
