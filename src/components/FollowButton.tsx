@@ -1,37 +1,34 @@
 'use client';
 import { useState } from 'react';
-import { useFollow } from '@/hooks/useFollow';
+
+type Props = {
+  username: string;
+  initialIsFollowed?: boolean;
+  onToggle?: (isFollowed: boolean) => void;
+};
 
 export default function FollowButton({
   username,
-  initialFollowed = false,
-}: {
-  username: string;
-  initialFollowed?: boolean;
-}) {
-  const [isFollowed, setIsFollowed] = useState(initialFollowed);
-  const { follow, unfollow, loading } = useFollow();
+  initialIsFollowed = false,
+  onToggle,
+}: Props) {
+  const [isFollowed, setIsFollowed] = useState(initialIsFollowed);
+  const [loading, setLoading] = useState(false);
 
   const handleClick = async () => {
-    try {
-      if (isFollowed) {
-        await unfollow(username);
-        setIsFollowed(false);
-      } else {
-        await follow(username);
-        setIsFollowed(true);
-      }
-    } catch (e) {
-      alert('Gagal, cek token login kawan!');
-    }
+    setLoading(true);
+    // simulate toggle - ganti dengan API call kamu kalau ada
+    const newState = !isFollowed;
+    setIsFollowed(newState);
+    if (onToggle) onToggle(newState);
+    setLoading(false);
   };
 
   return (
     <button
       onClick={handleClick}
       disabled={loading}
-      className={`rounded-full px-5 py-1.5 text-[11px] font-semibold border transition
-        ${isFollowed ? 'bg-white text-black border-white hover:bg-white/80' : 'bg-[#6D28D9] text-white border-[#6D28D9] hover:bg-[#7C3AED]'}`}
+      className={`px-4 py-1.5 rounded-full font-medium ${isFollowed ? 'bg-gray-200 text-black' : 'bg-black text-white'}`}
     >
       {loading ? '...' : isFollowed ? 'Following' : 'Follow'}
     </button>
